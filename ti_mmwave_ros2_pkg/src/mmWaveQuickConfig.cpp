@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
   mmWaveCLIName = node->declare_parameter("mmWaveCLI_name", "mmWaveCLI");
   ns = node->declare_parameter("namespace", "");
   
-  std::cout << "mmWaveCLIName : " << mmWaveCLIName << std::endl;
+  // std::cout << "mmWaveCLIName : " << mmWaveCLIName << std::endl;
   
   // service client
   auto client = node->create_client<ti_mmwave_ros2_interfaces::srv::MMWaveCLI>(
@@ -117,7 +117,8 @@ int main(int argc, char **argv) {
         // ROS_INFO("mmWaveQuickConfig: Sending command: '%s'",
         // request->comm.c_str() );
 
-        std::cout << "request->comm : " << request->comm << std::endl;
+        // [MINHO] :   
+        // std::cout << "request->comm : " << request->comm << std::endl;
         auto result_future = client->async_send_request(request);
 
         // foxy : rclcpp::FutureReturnCode::SUCCESS
@@ -135,7 +136,8 @@ int main(int argc, char **argv) {
           if (std::regex_search(result->resp, std::regex("Done"))) {
             // ROS_INFO("mmWaveQuickConfig: Command successful (mmWave sensor
             // responded with 'Done')");
-            std::cout << "result->resp : " << result->resp << std::endl;
+            // [MINHO]
+            // std::cout << "result->resp : " << result->resp << std::endl;
             parser->ParamsParser(result->resp);
           } else {
             RCLCPP_ERROR(node->get_logger(),
@@ -162,7 +164,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  RCLCPP_INFO(node->get_logger(),
+  RCLCPP_DEBUG(node->get_logger(),
               "mmWaveQuickConfig: mmWaveQuickConfig will now terminate. Done "
               "configuring mmWave device using config file: %s",
               argv[1]);
