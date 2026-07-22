@@ -39,7 +39,7 @@ public:
   COMPOSITION_PUBLIC
   DataUARTHandler();
 
-  ~DataUARTHandler();
+  // ~DataUARTHandler();
 
   COMPOSITION_PUBLIC
   void setPublishers(
