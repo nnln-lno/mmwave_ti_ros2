@@ -39,6 +39,8 @@ public:
   COMPOSITION_PUBLIC
   DataUARTHandler();
 
+  // ~DataUARTHandler();
+
   COMPOSITION_PUBLIC
   void setPublishers(
       const rclcpp::Publisher<PointCloud2>::SharedPtr radar_pub_in);
@@ -73,6 +75,8 @@ public:
 
   void callbackGlobalParam(
       std::shared_future<std::vector<rclcpp::Parameter>> future);
+
+  pthread_t uartThread, sorterThread, swapThread;
 
   /*Sorted mmwDemo Data structure*/
   mmwDataPacket mmwData;
@@ -161,6 +165,8 @@ private:
   
   std::string ns;
   std::shared_ptr<rclcpp::AsyncParametersClient> parameters_client;
+
+  bool thread_running_ = false;
 };
 
 #endif
