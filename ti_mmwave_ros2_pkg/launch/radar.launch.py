@@ -24,7 +24,7 @@ def generate_launch_description():
     mmwave_quick_config = Node(
         package='ti_mmwave_ros2_pkg',
         executable='mmWaveQuickConfig',
-        # name='mmwave_quick_config',
+        name='mmwave_quick_config',
         output='screen',
         arguments=[cfg_file_path],
         parameters=[{
@@ -58,7 +58,6 @@ def generate_launch_description():
             namespace='',
             package='rclcpp_components',
             executable='component_container',
-            arguments=['--ros-args', '--log-level', 'my_container:=warn'],
             composable_node_descriptions=[
                 ComposableNode(
                     package='ti_mmwave_ros2_pkg',

@@ -42,19 +42,9 @@
 #include <stdio.h>
 
 DataUARTHandler::DataUARTHandler()
-    : rclcpp::Node("DataUARTHandler", rclcpp::NodeOptions().use_global_arguments(false)), currentBufp(&pingPongBuffers[0]),
+    : rclcpp::Node("DataUARTHandler"), currentBufp(&pingPongBuffers[0]),
       nextBufp(&pingPongBuffers[1]) {
 }
-
-/*
-static void waitWithTimeout(pthread_cond_t *cv, pthread_mutex_t *mtx)
-{ struct timespec ts;
-  clock_gettime(CLOCK_REALTIME, &ts);
-  ts.tv_nsec += 100 * 1000000L;
-  if (ts.tv_nsec >= 1000000000L) {ts.tv_sec++; ts.tv_nsec-= 1000000000L; }
-  pthread_cond_timedwait(cv, mtx, &ts);
-}
-*/
 
 void DataUARTHandler::onInit() {
 
@@ -106,38 +96,15 @@ void DataUARTHandler::callbackGlobalParam(
   max_vel = static_cast<float>(result.at(10).as_double());
   vvel = static_cast<float>(result.at(11).as_double());
 
-  /*
   printf(
-      "\n==============================\nList of "
+      "\n\n==============================\nList of "
       "parameters\n==============================\nNumber of range samples: "
       "%d\nNumber of chirps: %d\nf_s: %.3f MHz\nf_c: %.3f GHz\nBandwidth: %.3f "
       "MHz\nPRI: %.3f us\nFrame time: %.3f ms\nMax range: %.3f m\nRange "
       "resolution: %.3f m\nMax Doppler: +-%.3f m/s\nDoppler resolution: %.3f "
       "m/s\n==============================\n",
       nr, nd, fs / 1e6, fc / 1e9, BW / 1e6, PRI * 1e6, tfr * 1e3, max_range,
-      vrange, max_vel / 2, vvel); 
-
-  std::cout << nd << std::endl;
-  */ 
-
-  if (nd <= 0)
-    std::cout << "Failed to Initialize radar sensors. Do Reset/Reboot process" << std::endl;
-  else
-  {
-    /*
-    printf(
-      "\n==============================\nList of "
-      "parameters\n==============================\nNumber of range samples: "
-      "%d\nNumber of chirps: %d\nf_s: %.3f MHz\nf_c: %.3f GHz\nBandwidth: %.3f "
-      "MHz\nPRI: %.3f us\nFrame time: %.3f ms\nMax range: %.3f m\nRange "
-      "resolution: %.3f m\nMax Doppler: +-%.3f m/s\nDoppler resolution: %.3f "
-      "m/s\n==============================\n",
-      nr, nd, fs / 1e6, fc / 1e9, BW / 1e6, PRI * 1e6, tfr * 1e3, max_range,
-      vrange, max_vel / 2, vvel); 
-    */ 
-
-    std::cout << "Success to Initialize radar sensors." << std::endl;
-  }
+      vrange, max_vel / 2, vvel);
 }
 
 void DataUARTHandler::setFrameID(char *myFrameID) { frameID = myFrameID; }
@@ -261,10 +228,7 @@ void *DataUARTHandler::readIncomingData(void) {
 
       /*Wait for the Swap thread to finish swapping pointers and signal us to
        * continue*/
-      
       pthread_cond_wait(&read_go_cv, &countSync_mutex);
-      // waitWithTimeout(&read_go_cv, &countSync_mutex);
-      // if (!rclcpp::ok()) { pthread_mutex_unlock(&countSync_mutex); break; }
 
       /*Unlock countSync so that Swap Thread can use it*/
       pthread_mutex_unlock(&countSync_mutex);
@@ -306,8 +270,6 @@ void *DataUARTHandler::syncedBufferSwap(void) {
 
     while (countSync < COUNT_SYNC_MAX) {
       pthread_cond_wait(&countSync_max_cv, &countSync_mutex);
-      // waitWithTimeout(&countSync_max_cv, &countSync_mutex);
-      // if (!rclcpp::ok()) break;
 
       pthread_mutex_lock(&currentBufp_mutex);
       pthread_mutex_lock(&nextBufp_mutex);
@@ -352,9 +314,7 @@ void *DataUARTHandler::sortIncomingData(void) {
   // wait for first packet to arrive
   pthread_mutex_lock(&countSync_mutex);
   pthread_cond_wait(&sort_go_cv, &countSync_mutex);
-  // waitWithTimeout(&sort_go_cv, &countSync_mutex);
-  // if (!rclcpp::ok()) { pthread_mutex_unlock(&countSync_mutex); return NULL; }
-  // pthread_mutex_unlock(&countSync_mutex);
+  pthread_mutex_unlock(&countSync_mutex);
 
   pthread_mutex_lock(&currentBufp_mutex);
 
@@ -945,9 +905,7 @@ void *DataUARTHandler::sortIncomingData(void) {
         pthread_cond_signal(&countSync_max_cv);
       }
 
-      pthread_cond_wait(&sort_go_cv, &countSync_mutex); 
-      // waitWithTimeout(&sort_go_cv, &countSync_mutex);
-      // if (!rclcpp::ok()) { pthread_mutex_unlock(&countSync_mutex); break; }
+      pthread_cond_wait(&sort_go_cv, &countSync_mutex);
 
       pthread_mutex_unlock(&countSync_mutex);
       pthread_mutex_lock(&currentBufp_mutex);
@@ -968,6 +926,8 @@ void *DataUARTHandler::sortIncomingData(void) {
 }
 
 void DataUARTHandler::start(void) {
+
+  pthread_t uartThread, sorterThread, swapThread;
 
   int iret1, iret2, iret3;
 
@@ -1002,12 +962,23 @@ void DataUARTHandler::start(void) {
     rclcpp::shutdown();
   }
 
-  thread_running_ = true;
-
   // rclcpp::spin(shared_from_this());
-  // while (1)
-  //   continue;
+  while (1)
+    continue;
 
+  pthread_join(iret1, NULL);
+  printf("DataUARTHandler Read Thread joined\n");
+  pthread_join(iret2, NULL);
+  printf("DataUARTHandler Sort Thread joined\n");
+  pthread_join(iret3, NULL);
+  printf("DataUARTHandler Swap Thread joined\n");
+
+  pthread_mutex_destroy(&countSync_mutex);
+  pthread_mutex_destroy(&nextBufp_mutex);
+  pthread_mutex_destroy(&currentBufp_mutex);
+  pthread_cond_destroy(&countSync_max_cv);
+  pthread_cond_destroy(&read_go_cv);
+  pthread_cond_destroy(&sort_go_cv);
 }
 
 void *DataUARTHandler::readIncomingData_helper(void *context) {
@@ -1054,34 +1025,3 @@ void DataUARTHandler::visualize(
 
   // marker_pub->publish(marker);
 }
-
-/*
-DataUARTHandler::~DataUARTHandler(){
-  if (thread_running_)
-  {
-    pthread_cond_broadcast(&countSync_max_cv);
-    pthread_cond_broadcast(&read_go_cv);
-    pthread_cond_broadcast(&sort_go_cv);
-
-    pthread_join(uartThread, NULL);
-    pthread_join(sorterThread, NULL);
-    pthread_join(swapThread, NULL);
-  }
-
-  
-  pthread_join(iret1, NULL);
-  printf("DataUARTHandler Read Thread joined\n");
-  pthread_join(iret2, NULL);
-  printf("DataUARTHandler Sort Thread joined\n");
-  pthread_join(iret3, NULL);
-  printf("DataUARTHandler Swap Thread joined\n");
-  
-
-  pthread_mutex_destroy(&countSync_mutex);
-  pthread_mutex_destroy(&nextBufp_mutex);
-  pthread_mutex_destroy(&currentBufp_mutex);
-  pthread_cond_destroy(&countSync_max_cv);
-  pthread_cond_destroy(&read_go_cv);
-  pthread_cond_destroy(&sort_go_cv);
-} 
-*/

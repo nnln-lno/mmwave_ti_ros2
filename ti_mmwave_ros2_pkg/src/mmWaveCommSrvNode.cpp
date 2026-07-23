@@ -153,11 +153,10 @@ public:
     }
 
     /*Send out command received from the client*/
-    /* [MINHO]
     RCLCPP_INFO(this->get_logger(),
                 "mmWaveCommSrv: Sending command to sensor: '%s'",
                 req->comm.c_str());
-    */
+
     req->comm.append("\n");
     mySerialObject.write(req->comm.c_str());
 
@@ -174,11 +173,9 @@ public:
     /*Read output from mmwDemo*/
     /**/
     mySerialObject.readline(res->resp, 1024, ":/>");
-    /* [MINHO]
     RCLCPP_INFO(this->get_logger(),
                 "mmWaveCommSrv: Received response from sensor: '%s'",
                 res->resp.c_str());
-    */
     /**/
     mySerialObject.close();
   }

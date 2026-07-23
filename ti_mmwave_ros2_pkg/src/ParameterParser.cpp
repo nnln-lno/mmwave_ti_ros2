@@ -50,8 +50,8 @@ void ParameterParser::init(const std::string &ns){
     client_name = "/" + ns + "/mmWaveCommSrvNode";
   else
     client_name = "/mmWaveCommSrvNode";
-  
-  // std::cout << "ParameterParser - client_name : " << client_name << std::endl;
+
+  std::cout << "ParameterParser - client_name : " << client_name << std::endl;
   parameters_client = std::make_shared<rclcpp::AsyncParametersClient>(
       this, client_name);
 
@@ -169,7 +169,6 @@ void ParameterParser::CalParams() {
       std::bind(&ParameterParser::callbackGlobalParam, this,
                 std::placeholders::_1));
 
-  /* [MINHO]
   std::cout << "numAdcSamples : " << nr << std::endl;
   std::cout << "numLoops : " << nd << std::endl;
   std::cout << "num_TX : " << ntx << std::endl;
@@ -182,7 +181,6 @@ void ParameterParser::CalParams() {
   std::cout << "range_resolution : " << vrange << std::endl;
   std::cout << "max_doppler_vel : " << max_vel << std::endl;
   std::cout << "doppler_vel_resolution : " << vvel << std::endl;
-  */
 }
 
 void ParameterParser::callbackGlobalParam(
